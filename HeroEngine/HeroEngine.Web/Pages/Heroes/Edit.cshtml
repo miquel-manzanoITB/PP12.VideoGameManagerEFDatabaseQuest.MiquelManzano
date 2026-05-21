@@ -1,0 +1,58 @@
+﻿@page "/Heroes/Edit/{id:int}"
+@model EditModel
+@{
+    ViewData["Title"] = "Editar heroi";
+}
+
+<h1>Editar heroi</h1>
+
+<div class="card" style="max-width:500px;">
+    <form method="post">
+        <input type="hidden" asp-for="Hero.Id" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div style="margin-bottom:1rem;">
+            <label asp-for="Hero.Name">Nom</label>
+            <input asp-for="Hero.Name" class="form-control" />
+            <span asp-validation-for="Hero.Name" class="text-danger"></span>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+            <label asp-for="Hero.HeroClassId">Classe</label>
+            <select asp-for="Hero.HeroClassId" asp-items="Model.HeroClassList" class="form-select">
+                <option value="">-- Selecciona una classe --</option>
+            </select>
+            <span asp-validation-for="Hero.HeroClassId" class="text-danger"></span>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+            <label asp-for="Hero.Level">Nivell</label>
+            <input asp-for="Hero.Level" type="number" class="form-control" />
+            <span asp-validation-for="Hero.Level" class="text-danger"></span>
+        </div>
+
+        <div style="margin-bottom:1rem;">
+            <label asp-for="Hero.MaxHp">Max HP</label>
+            <input asp-for="Hero.MaxHp" type="number" class="form-control" />
+        </div>
+
+        <div style="margin-bottom:1rem;">
+            <label asp-for="Hero.Armor">Armadura</label>
+            <input asp-for="Hero.Armor" type="number" class="form-control" />
+        </div>
+
+        <div style="margin-bottom:1.5rem;">
+            <label asp-for="Hero.Biography">Biografia</label>
+            <textarea asp-for="Hero.Biography" class="form-control" rows="3"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Desar canvis</button>
+        <a asp-page="/Heroes/Heroes" class="btn btn-secondary" style="margin-left:8px;">Cancel·lar</a>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
