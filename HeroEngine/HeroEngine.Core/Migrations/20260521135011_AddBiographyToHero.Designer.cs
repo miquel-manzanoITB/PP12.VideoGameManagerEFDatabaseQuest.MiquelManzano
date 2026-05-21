@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HeroEngine.Core.Migrations
 {
     [DbContext(typeof(HeroEngineContext))]
-    [Migration("20260521134404_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260521135011_AddBiographyToHero")]
+    partial class AddBiographyToHero
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
