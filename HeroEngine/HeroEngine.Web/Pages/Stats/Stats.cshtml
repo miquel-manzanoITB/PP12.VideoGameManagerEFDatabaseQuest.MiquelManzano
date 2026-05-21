@@ -1,0 +1,186 @@
+﻿@page
+@model StatsPageModel
+@{
+    ViewData["Title"] = "Statistics";
+}
+
+<h1>📊 Kingdom Statistics</h1>
+
+<!-- Hero distribution -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+    <div class="card">
+        <h2>Hero distribution by class</h2>
+        @if (!Model.ClassDistribution.Any())
+        {
+            <p style="color:#7070a0; font-size:0.9rem;">No heroes registered.</p>
+        }
+        else
+        {
+            <table>
+                <thead><tr><th>Class</th><th>Count</th><th>%</th></tr></thead>
+                <tbody>
+                    @foreach (var (type, count) in Model.ClassDistribution)
+                    {
+                        double pct = Model.TotalHeroes > 0
+                            ? Math.Round((double)count / Model.TotalHeroes * 100, 1) : 0;
+                        <tr>
+                            <td><span class="badge badge-@type.ToLower()">@type</span></td>
+                            <td>@count</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div style="flex:1; height:6px; background:#1e1e3a; border-radius:3px;">
+                                        <div style="width:@pct%; height:100%; background:#7c6af7; border-radius:3px;"></div>
+                                    </div>
+                                    <span style="font-size:0.8rem; color:#9090b0; min-width:35px;">@pct%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="card">
+        <h2>Top 3 heroes by level</h2>
+        @if (!Model.TopHeroes.Any())
+        {
+            <p style="color:#7070a0; font-size:0.9rem;">No heroes registered.</p>
+        }
+        else
+        {
+            int rank = 1;
+            @foreach (var h in Model.TopHeroes)
+            {
+                <div style="display:flex; align-items:center; gap:12px; padding:10px 0;
+                            border-bottom:1px solid #1e1e3a;">
+                    <span style="font-size:1.2rem; min-width:30px; color:#7070a0;">
+                        @(rank == 1 ? "🥇" : rank == 2 ? "🥈" : "🥉")
+                    </span>
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color:#c0b0ff;">@h.Name</div>
+                        <div style="font-size:0.8rem; color:#7070a0;">@h.Type</div>
+                    </div>
+                    <span style="font-size:1.1rem; font-weight:700; color:#7c6af7;">Lvl @h.Level</span>
+                </div>
+                rank++;
+            }
+        }
+    </div>
+</div>
+
+<!-- Abilities by type -->
+<div class="card" style="margin-bottom:1rem;">
+    <h2>Most common abilities by type</h2>
+    @if (!Model.AbilityTypeCounts.Any())
+    {
+        <p style="color:#7070a0; font-size:0.9rem;">No abilities registered.</p>
+    }
+    else
+    {
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            @foreach (var (type, count) in Model.AbilityTypeCounts)
+            {
+                <div class="stat-card" style="min-width:120px;">
+                    <div class="value">@count</div>
+                    <div class="label">@type</div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Combat history -->
+<div class="card">
+    <h2>Combat history</h2>
+
+    <form method="get" style="display:flex; gap:10px; margin-bottom:1rem; align-items:center;">
+        <label style="margin:0; white-space:nowrap; font-size:0.85rem;">Filter by result:</label>
+        <select name="filter" onchange="this.form.submit()"
+                style="width:auto; margin:0; padding:6px 10px;">
+            <option value="" selected="@(Model.Filter == "" ? "selected" : null)">All</option>
+            <option value="Victory" selected="@(Model.Filter == "Victory" ? "selected" : null)">Victory</option>
+            <option value="Defeat"  selected="@(Model.Filter == "Defeat"  ? "selected" : null)">Defeat</option>
+        </select>
+    </form>
+
+    @if (!Model.CombatHistory.Any())
+    {
+        <p style="color:#7070a0; font-size:0.9rem;">No combat records found.</p>
+    }
+    else
+    {
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th><th>Heroes</th><th>Enemies</th>
+                        <th>Result</th><th>Rounds</th><th>Total dmg</th><th>MVP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.CombatHistory)
+                    {
+                        <tr>
+                            <td style="color:#7070a0; font-size:0.8rem;">@(row.Length > 0 ? row[0] : "")</td>
+                            <td>@(row.Length > 1 ? row[1] : "")</td>
+                            <td style="color:#9090b0;">@(row.Length > 2 ? row[2] : "")</td>
+                            <td>
+                                @if (row.Length > 3)
+                                {
+                                    <span class="badge @(row[3].Contains("Victory") ? "badge-victory" : "badge-defeat")">
+                                        @row[3]
+                                    </span>
+                                }
+                            </td>
+                            <td>@(row.Length > 4 ? row[4] : "")</td>
+                            <td>@(row.Length > 5 ? row[5] : "")</td>
+                            <td style="color:#ffcc44;">@(row.Length > 6 ? row[6] : "")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Search heroes by name -->
+<div class="card">
+    <h2>Search heroes by name (Regex)</h2>
+    <form method="get" style="display:flex; gap:10px; align-items:center;">
+        <input name="search" value="@Model.SearchPattern" placeholder="e.g. ^Al or ric$"
+               style="width:auto; flex:1; margin:0;" />
+        <button type="submit" class="btn btn-primary">Search</button>
+        @if (!string.IsNullOrEmpty(Model.SearchPattern))
+        {
+            <a asp-page="/Stats/Stats" class="btn btn-secondary">Clear</a>
+        }
+    </form>
+
+    @if (!string.IsNullOrEmpty(Model.SearchPattern))
+    {
+        <div style="margin-top:1rem;">
+            @if (!Model.SearchResults.Any())
+            {
+                <p style="color:#7070a0; font-size:0.9rem;">No heroes match the pattern "@Model.SearchPattern".</p>
+            }
+            else
+            {
+                <table>
+                    <thead><tr><th>Name</th><th>Class</th><th>Level</th></tr></thead>
+                    <tbody>
+                        @foreach (var h in Model.SearchResults)
+                        {
+                            <tr>
+                                <td><a asp-page="/Heroes/Detail" asp-route-name="@h.Name"
+                                       style="color:#c0b0ff; text-decoration:none;">@h.Name</a></td>
+                                <td><span class="badge badge-@h.Type.ToLower()">@h.Type</span></td>
+                                <td>@h.Level</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<GameConfig>
+  <LevelMultiplier>115</LevelMultiplier>
+  <CriticalHitChance>1</CriticalHitChance>
+  <MaxCombatRounds>20</MaxCombatRounds>
+  <MaxHeroesPerBattle>4</MaxHeroesPerBattle>
+</GameConfig>

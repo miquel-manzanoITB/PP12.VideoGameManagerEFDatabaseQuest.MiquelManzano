@@ -1,0 +1,71 @@
+﻿@page "/Heroes/Detail/{name}"
+@model DetailModel
+@{
+    ViewData["Title"] = Model.Hero?.Name ?? "Hero Detail";
+}
+
+@if (Model.Hero == null)
+{
+    <div class="card">
+        <p style="color:#ff8080;">Hero not found.</p>
+        <a asp-page="/Heroes/Heroes" class="btn btn-secondary" style="margin-top:1rem;">← Back to heroes</a>
+    </div>
+}
+else
+{
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+        <a asp-page="/Heroes/Heroes" style="color:#7070a0; text-decoration:none; font-size:0.9rem;">← Heroes</a>
+        <h1 style="margin-bottom:0;">@Model.Hero.Name</h1>
+        <span class="badge badge-@Model.Hero.Type.ToLower()" style="font-size:0.9rem; padding:4px 14px;">
+            @Model.Hero.Type
+        </span>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
+        <div class="card">
+            <h2>Stats</h2>
+            <table style="margin-top:0.5rem;">
+                <tr><td style="color:#7070a0; width:130px;">Level</td><td style="font-weight:600; color:#c0b0ff;">@Model.Hero.Level</td></tr>
+                <tr><td style="color:#7070a0;">Max HP</td><td style="font-weight:600; color:#66dd88;">@Model.Hero.MaxHp</td></tr>
+                <tr><td style="color:#7070a0;">Armor</td><td style="font-weight:600; color:#ffaa44;">@(Model.Hero.Armor > 0 ? Model.Hero.Armor : 0)</td></tr>
+                <tr><td style="color:#7070a0;">Abilities</td><td style="font-weight:600;">@Model.Hero.Abilities.Count</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Abilities</h2>
+            @if (!Model.Hero.Abilities.Any())
+            {
+                <p style="color:#7070a0; font-size:0.9rem;">No abilities assigned.</p>
+            }
+            else
+            {
+                <table style="margin-top:0.5rem;">
+                    <thead>
+                        <tr><th>Name</th><th>Type</th><th>Rarity</th><th>Cost</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ab in Model.Hero.Abilities.OrderByDescending(a => a.Rarity))
+                        {
+                            <tr>
+                                <td style="font-weight:500;">@ab.Name</td>
+                                <td style="color:#9090b0;">@ab.Type</td>
+                                <td>
+                                    <span style="color: @(ab.Rarity == "Legendary" ? "#ffcc44" :
+                                                                                                                                            ab.Rarity == "Epic" ? "#bb88ff" :
+                                                                                                                                            ab.Rarity == "Rare" ? "#44aaff" : "#aaaaaa");">
+                                        @ab.Rarity
+                                    </span>
+                                </td>
+                                <td>@ab.Cost</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+
+    <a asp-page="/Heroes/Heroes" class="btn btn-secondary">← Back to heroes</a>
+    <a asp-page="/Heroes/Create" class="btn btn-primary" style="margin-left:8px;">+ New hero</a>
+}

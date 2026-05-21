@@ -1,0 +1,15 @@
+Date,Heroes,Enemies,Result,Rounds,TotalDamage,MostEffective
+2025-04-01,Aldric;Lyria,Minion x2,Victory,5,340,Aldric2026-04-27 16:11,Aldric;Lyria,Minion-1;Minion-2,Victory,2,111,Aldric
+2026-04-27 16:11,Aldric;Lyria,Minion-1;Minion-2,Victory,2,100,Aldric
+2026-04-27 16:11,Aldric;Lyria,Boss-1;Boss-2,Defeat,4,368,Aldric
+2026-04-27 16:40,Bunni;Lyria,Minion-1;Minion-2,Victory,2,139,Bunni
+2026-04-27 17:36,Bunni;Lyria,Elite-1;Elite-2,Victory,4,441,Bunni
+2026-04-27 17:36,Bunni;Lyria,Elite-1;Elite-2,Victory,4,376,Bunni
+2026-04-27 17:37,Bunni;Lyria,Minion-1;Minion-2,Victory,2,140,Bunni
+2026-04-27 18:27,Eudald;Bunni,Minion-1;Minion-2,Victory,1,248,Eudald
+2026-04-28 12:52,Bunni;Cat,Elite-1;Elite-2,Victory,2,293,Bunni
+2026-04-28 19:50,Cat;Bunni,Minion-1;Minion-2,Victory,1,96,Bunni
+2026-04-28 19:59,Lyria;Cat,Minion-1;Minion-2,Victory,2,91,Cat
+2026-04-28 19:59,Lyria;Cat,Boss-1;Boss-2,Defeat,3,387,Cat
+2026-04-28 20:00,Test;Eudald,Boss-1;Boss-2,Victory,2,581,Eudald
+2026-05-21 12:51,Lyria,Minion-1,Victory,3,67,Lyria

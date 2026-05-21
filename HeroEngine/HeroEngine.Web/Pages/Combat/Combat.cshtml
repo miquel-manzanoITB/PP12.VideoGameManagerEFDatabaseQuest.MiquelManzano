@@ -1,0 +1,103 @@
+﻿@page
+@model CombatPageModel
+@{
+    ViewData["Title"] = "Combat";
+}
+
+<h1>⚔ Combat Arena</h1>
+
+@if (!string.IsNullOrEmpty(Model.Message))
+{
+    <div class="alert @(Model.Victory ? "alert-success" : "alert-danger")" style="margin-bottom:1rem;">
+        @Model.Message
+    </div>
+}
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+    <!-- Start combat form -->
+    <div class="card">
+        <h2>Start a combat</h2>
+        <form method="post">
+            <div class="form-group">
+                <label asp-for="SelectedHero1">Hero 1</label>
+                <select asp-for="SelectedHero1">
+                    <option value="">— Select hero —</option>
+                    @foreach (var h in Model.AvailableHeroes)
+                    {
+                        <option value="@h.Name">@h.Name (@h.Type, lvl @h.Level)</option>
+                    }
+                </select>
+                <span asp-validation-for="SelectedHero1" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="SelectedHero2">Hero 2 (optional)</label>
+                <select asp-for="SelectedHero2">
+                    <option value="">— None —</option>
+                    @foreach (var h in Model.AvailableHeroes)
+                    {
+                        <option value="@h.Name">@h.Name (@h.Type, lvl @h.Level)</option>
+                    }
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="EnemyType">Enemy type</label>
+                <select asp-for="EnemyType">
+                    <option value="Minion">Minion (HP: 40, weak)</option>
+                    <option value="Elite">Elite (HP: 100, tough)</option>
+                    <option value="Boss">Boss (HP: 250, devastating)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">⚔ Start battle</button>
+        </form>
+    </div>
+
+    <!-- Last combat summary -->
+    <div class="card">
+        <h2>Last combat result</h2>
+        @if (Model.LastStats == null)
+        {
+            <p style="color:#7070a0; font-size:0.9rem;">No combat run yet this session.</p>
+        }
+        else
+        {
+            var s = Model.LastStats;
+            <table>
+                <tr><td style="color:#7070a0;">Heroes</td><td>@string.Join(", ", s.Heroes)</td></tr>
+                <tr><td style="color:#7070a0;">Enemies</td><td>@string.Join(", ", s.Enemies)</td></tr>
+                <tr>
+                    <td style="color:#7070a0;">Result</td>
+                    <td>
+                        <span class="badge @(s.Victory ? "badge-victory" : "badge-defeat")">
+                            @(s.Victory ? "Victory" : "Defeat")
+                        </span>
+                    </td>
+                </tr>
+                <tr><td style="color:#7070a0;">Rounds</td><td>@s.Rounds</td></tr>
+                <tr><td style="color:#7070a0;">Total damage</td><td>@s.TotalDamage</td></tr>
+                <tr><td style="color:#7070a0;">MVP</td><td style="color:#ffcc44;">@s.MostEffective</td></tr>
+            </table>
+        }
+    </div>
+</div>
+
+<!-- Combat log -->
+<div class="card">
+    <h2>Combat log (battle.log)</h2>
+    @if (string.IsNullOrEmpty(Model.CombatLog))
+    {
+        <p style="color:#7070a0; font-size:0.9rem;">No log file yet. Run a combat first.</p>
+    }
+    else
+    {
+        <pre>@Model.CombatLog</pre>
+    }
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

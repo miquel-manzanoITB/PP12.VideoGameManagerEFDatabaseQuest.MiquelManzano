@@ -1,0 +1,49 @@
+﻿@page
+@model CreateModel
+@{
+    ViewData["Title"] = "Create Hero";
+}
+
+<div style="max-width:520px;">
+    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem;">
+        <a asp-page="/Heroes/Heroes" style="color:#7070a0; text-decoration:none; font-size:0.9rem;">← Heroes</a>
+        <h1 style="margin-bottom:0;">Create Hero</h1>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            <div class="form-group">
+                <label asp-for="Input.Name">Hero name</label>
+                <input asp-for="Input.Name" placeholder="e.g. Aldric" />
+                <span asp-validation-for="Input.Name" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Type">Class</label>
+                <select asp-for="Input.Type">
+                    <option value="Warrior">Warrior — high HP, armor, physical damage</option>
+                    <option value="Mage">Mage — spell damage, mana-based attacks</option>
+                    <option value="Rogue">Rogue — stealth bonus, fast initiative</option>
+                </select>
+                <span asp-validation-for="Input.Type" class="field-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Level">Level (1–20)</label>
+                <input asp-for="Input.Level" type="number" min="1" max="20" />
+                <span asp-validation-for="Input.Level" class="field-error"></span>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:1.5rem;">
+                <button type="submit" class="btn btn-primary">Create hero</button>
+                <a asp-page="/Heroes/Heroes" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
