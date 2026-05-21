@@ -1,23 +1,25 @@
 using HeroEngine.Core.Data;
-using HeroEngine.Web.DTOs;
+using HeroEngine.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 public class DetailModel : PageModel
 {
-    private readonly HeroRepository _repo;
+    private readonly HeroEngineContext _context;
+    public HeroEntity? Hero { get; set; }
 
-    [BindProperty(SupportsGet = true)]
-    public string Name { get; set; } = "";
+    public DetailModel(HeroEngineContext context) => _context = context;
 
-    public HeroDto? Hero { get; set; }
-
-    public DetailModel(HeroRepository repo) => _repo = repo;
-
-    public void OnGet()
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        Hero = _repo.LoadAll()
-                    .FirstOrDefault(h => h.Name.Equals(Name,
-                        StringComparison.OrdinalIgnoreCase));
+        // Tasca 8.1: carrega heroi amb classe i habilitats via .Include()
+        Hero = await _context.Heroes
+            .Include(h => h.HeroClass)
+            .Include(h => h.Abilities)
+            .FirstOrDefaultAsync(h => h.Id == id);
+
+        if (Hero == null) return NotFound();
+        return Page();
     }
 }

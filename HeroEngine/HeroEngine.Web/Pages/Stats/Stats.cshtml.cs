@@ -1,71 +1,99 @@
 using HeroEngine.Core.Data;
-using HeroEngine.Web.DTOs;
+using HeroEngine.Core.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 public class StatsPageModel : PageModel
 {
-    private readonly HeroRepository _repo;
-    private readonly CsvStatsWriter _csv;
+    private readonly HeroEngineContext _context;
 
     public int TotalHeroes { get; set; }
-    public Dictionary<string, int> ClassDistribution { get; set; } = new();
-    public List<HeroDto> TopHeroes { get; set; } = new();
-    public Dictionary<string, int> AbilityTypeCounts { get; set; } = new();
-    public List<string[]> CombatHistory { get; set; } = new();
-    public List<HeroDto> SearchResults { get; set; } = new();
-    public string SearchPattern { get; set; } = "";
-    public string Filter { get; set; } = "";
+    public List<HeroEntity> TopHeroes { get; set; } = new();          // Tasca 6.2
+    public List<HeroEntity> FilteredHeroes { get; set; } = new();     // Tasca 6.1
+    public List<HeroEntity> SearchResults { get; set; } = new();      // Tasca 6.3
 
-    public StatsPageModel(HeroRepository repo, CsvStatsWriter csv)
+    // Tasca 7
+    public List<dynamic> HeroesByClass { get; set; } = new();         // 7.1
+    public List<dynamic> AbilitiesByRarity { get; set; } = new();     // 7.2
+
+    public string SelectedClass { get; set; } = "";
+    public string SearchTerm { get; set; } = "";
+    public int? MinLevel { get; set; }
+    public int TopN { get; set; } = 3;
+
+    public StatsPageModel(HeroEngineContext context) => _context = context;
+
+    public async Task OnGetAsync(
+        string? selectedClass = "",
+        string? search = "",
+        int? minLevel = null,
+        int topN = 3)
     {
-        _repo = repo;
-        _csv = csv;
-    }
+        SelectedClass = selectedClass ?? "";
+        SearchTerm = search ?? "";
+        MinLevel = minLevel;
+        TopN = topN > 0 ? topN : 3;
 
-    public void OnGet(string? filter = "", string? search = "")
-    {
-        Filter = filter ?? "";
-        SearchPattern = search ?? "";
+        TotalHeroes = await _context.Heroes.CountAsync();
 
-        var heroes = _repo.LoadAll();
-        TotalHeroes = heroes.Count;
+        // Tasca 6.2 — Top N herois per nivell
+        TopHeroes = await _context.Heroes
+            .Include(h => h.HeroClass)
+            .OrderByDescending(h => h.Level)
+            .Take(TopN)
+            .ToListAsync();
 
-        var analytics = new HeroAnalytics(heroes);
-
-        // Class distribution
-        ClassDistribution = heroes
-            .GroupBy(h => h.Type)
-            .ToDictionary(g => g.Key, g => g.Count());
-
-        // Top 3 by level
-        // Cast to the expected element type because HeroAnalytics methods return non-generic IEnumerable
-        TopHeroes = analytics.GetTopHeroesByLevel(3).ToList();
-
-        // Ability type counts
-        AbilityTypeCounts = heroes
-            .SelectMany(h => h.Abilities)
-            .GroupBy(a => a.Type)
-            .ToDictionary(g => g.Key, g => g.Count());
-
-        // Combat history from CSV with optional filter
-        var all = _csv.ReadLast(100);
-        CombatHistory = string.IsNullOrEmpty(Filter)
-            ? all.TakeLast(10).ToList()
-            : all.Where(r => r.Length > 3 &&
-                             r[3].Contains(Filter, StringComparison.OrdinalIgnoreCase))
-                 .TakeLast(10).ToList();
-
-        // Regex search
-        if (!string.IsNullOrEmpty(SearchPattern))
+        // Tasca 6.1 — Filtratge per classe i ordenació per nivell
+        if (!string.IsNullOrEmpty(SelectedClass))
         {
-            try
-            {
-                SearchResults = analytics.SearchHeroesByName(SearchPattern).ToList();
-            }
-            catch
-            {
-                SearchResults = new List<HeroDto>();
-            }
+            FilteredHeroes = await _context.Heroes
+                .Include(h => h.HeroClass)
+                .Where(h => h.HeroClass!.Name == SelectedClass)
+                .OrderByDescending(h => h.Level)
+                .ToListAsync();
+        }
+
+        // Tasca 6.3 — Cerca per nom (sense distinció de majúscules)
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            SearchResults = await _context.Heroes
+                .Include(h => h.HeroClass)
+                .Where(h => h.Name.Contains(SearchTerm))
+                .ToListAsync();
+        }
+
+        // Tasca 7.1 — Herois agrupats per classe amb recompte i nivell mitjà
+        HeroesByClass = (await _context.Heroes
+            .Include(h => h.HeroClass)
+            .GroupBy(h => h.HeroClass!.Name)
+            .Select(grp => new {
+                ClassName = grp.Key,
+                Count = grp.Count(),
+                AvgLevel = grp.Average(h => (double)h.Level)
+            })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync())
+            .Cast<dynamic>()
+            .ToList();
+
+        // Tasca 7.2 — Habilitats per raresa
+        AbilitiesByRarity = (await _context.Abilities
+            .GroupBy(a => a.Rarity)
+            .Select(grp => new { Rarity = grp.Key, Count = grp.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync())
+            .Cast<dynamic>()
+            .ToList();
+
+        // Tasca 7.3 — Cerca combinada dinàmica (si s'usa el filtre combinat)
+        if (!string.IsNullOrEmpty(SelectedClass) || MinLevel.HasValue)
+        {
+            var query = _context.Heroes.Include(h => h.HeroClass).AsQueryable();
+            if (!string.IsNullOrEmpty(SelectedClass))
+                query = query.Where(h => h.HeroClass!.Name == SelectedClass);
+            if (MinLevel.HasValue)
+                query = query.Where(h => h.Level >= MinLevel.Value);
+            FilteredHeroes = await query.OrderBy(h => h.Name).ToListAsync();
         }
     }
 }

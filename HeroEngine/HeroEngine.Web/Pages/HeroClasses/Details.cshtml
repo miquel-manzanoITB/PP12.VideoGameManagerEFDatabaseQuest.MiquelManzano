@@ -1,0 +1,41 @@
+﻿@page "/HeroClasses/Details/{id:int}"
+@model HeroClassDetailsModel
+@{
+    ViewData["Title"] = Model.HeroClass?.Name ?? "Detall classe";
+}
+
+@if (Model.HeroClass == null)
+{
+    <p style="color:#ff8080;">Classe no trobada.</p>
+}
+else
+{
+    <h1>@Model.HeroClass.Name</h1>
+    <p style="color:#9090b0;">@Model.HeroClass.Description</p>
+
+    <div class="card">
+        <h2>Herois d'aquesta classe (@Model.HeroClass.Heroes.Count)</h2>
+        @if (!Model.HeroClass.Heroes.Any())
+        {
+            <p style="color:#7070a0;">Aquesta classe no té herois.</p>
+        }
+        else
+        {
+            <table>
+                <thead><tr><th>Nom</th><th>Nivell</th><th>Max HP</th></tr></thead>
+                <tbody>
+                    @foreach (var h in Model.HeroClass.Heroes.OrderByDescending(x => x.Level))
+                    {
+                        <tr>
+                            <td><a asp-page="/Heroes/Detail" asp-route-id="@h.Id" style="color:#c0b0ff;">@h.Name</a></td>
+                            <td>@h.Level</td>
+                            <td>@h.MaxHp</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <a asp-page="/HeroClasses/Index" class="btn btn-secondary" style="margin-top:1rem;">← Tornar a les classes</a>
+}

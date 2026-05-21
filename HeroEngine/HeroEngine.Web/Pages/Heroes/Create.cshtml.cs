@@ -1,34 +1,50 @@
 using HeroEngine.Core.Data;
-using HeroEngine.Web.DTOs;
+using HeroEngine.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 public class CreateModel : PageModel
 {
-    private readonly HeroRepository _repo;
+    private readonly HeroEngineContext _context;
 
-    public CreateModel(HeroRepository repo) => _repo = repo;
+    public CreateModel(HeroEngineContext context) => _context = context;
 
     [BindProperty]
     public HeroInputModel Input { get; set; } = new();
 
-    public void OnGet() { }
+    // Tasca 8.2: SelectList de HeroClass
+    public SelectList HeroClassList { get; set; } = default!;
 
-    public IActionResult OnPost()
+    public async Task OnGetAsync()
+    {
+        HeroClassList = new SelectList(
+            await _context.HeroClasses.ToListAsync(), "Id", "Name");
+    }
+
+    public async Task<IActionResult> OnPostAsync()
     {
         if (!ModelState.IsValid)
+        {
+            HeroClassList = new SelectList(
+                await _context.HeroClasses.ToListAsync(), "Id", "Name");
             return Page();
+        }
 
-        _repo.Add(new HeroDto
+        var hero = new HeroEntity
         {
             Name = Input.Name,
-            Type = Input.Type,
             Level = Input.Level,
             MaxHp = 100 + (Input.Level - 1) * 20,
-            Armor = Input.Type == "Warrior" ? 10 + (Input.Level - 1) * 2 : 0,
-            Abilities = new List<AbilityDto>()
-        });
+            Armor = Input.Armor,
+            Biography = Input.Biography,
+            HeroClassId = Input.HeroClassId
+        };
+
+        _context.Heroes.Add(hero);
+        await _context.SaveChangesAsync();
 
         return RedirectToPage("/Heroes/Heroes");
     }
@@ -36,13 +52,18 @@ public class CreateModel : PageModel
 
 public class HeroInputModel
 {
-    [Required(ErrorMessage = "Name is required.")]
-    [StringLength(30, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 30 characters.")]
+    [Required(ErrorMessage = "El nom és obligatori")]
+    [StringLength(80, MinimumLength = 2, ErrorMessage = "El nom ha de tenir entre 2 i 80 caràcters")]
     public string Name { get; set; } = "";
 
-    [Required(ErrorMessage = "Class is required.")]
-    public string Type { get; set; } = "Warrior";
-
-    [Range(1, 20, ErrorMessage = "Level must be between 1 and 20.")]
+    [Range(1, 100, ErrorMessage = "El nivell ha de ser entre 1 i 100")]
     public int Level { get; set; } = 1;
+
+    [Range(0, 999)]
+    public int Armor { get; set; } = 0;
+
+    public string? Biography { get; set; }
+
+    [Required(ErrorMessage = "La classe és obligatòria")]
+    public int HeroClassId { get; set; }
 }
