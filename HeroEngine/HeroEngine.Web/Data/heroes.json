@@ -1,49 +1,18 @@
 [
   {
-    "Name": "Lyria",
-    "Type": "Mage",
-    "Level": 2,
-    "MaxHp": 90,
-    "Armor": 0,
-    "Abilities": [
-      {
-        "Name": "Arcane Barrier",
-        "Type": "Defense",
-        "Rarity": "Rare",
-        "Cost": 15
-      }
-    ]
-  },
-  {
-    "Name": "Bunni",
+    "Name": "Aldric",
     "Type": "Warrior",
-    "Level": 10,
-    "MaxHp": 280,
-    "Armor": 28,
+    "Level": 5,
+    "MaxHp": 200,
+    "Armor": 60,
     "Abilities": []
   },
   {
-    "Name": "Cat",
+    "Name": "Dragon Slayer",
     "Type": "Rogue",
-    "Level": 4,
-    "MaxHp": 160,
-    "Armor": 0,
-    "Abilities": []
-  },
-  {
-    "Name": "Eudald",
-    "Type": "Warrior",
-    "Level": 20,
-    "MaxHp": 480,
-    "Armor": 48,
-    "Abilities": []
-  },
-  {
-    "Name": "Test",
-    "Type": "Rogue",
-    "Level": 15,
-    "MaxHp": 380,
-    "Armor": 0,
+    "Level": 3,
+    "MaxHp": 140,
+    "Armor": 5,
     "Abilities": []
   }
 ]

@@ -11,6 +11,26 @@
     <div class="alert @(Model.IsError ? "alert-danger" : "alert-success")">@Model.Message</div>
 }
 
+<!-- NOVA SECCIÓ: Sincronització Files ↔ BD -->
+<div class="card" style="margin-bottom:1rem; border: 1px solid #444;">
+    <h2>🔄 Sincronització Files ↔ Base de dades</h2>
+    <p style="color:#9090b0; font-size:0.9rem; margin-bottom:1rem;">
+        Exporta els herois de la BD cap al fitxer JSON, o importa els herois del fitxer JSON cap a la BD.
+    </p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <form method="post" asp-page-handler="ExportToFiles">
+            <button type="submit" class="btn btn-primary">
+                ⬇ BD → heroes.json
+            </button>
+        </form>
+        <form method="post" asp-page-handler="ImportFromFiles">
+            <button type="submit" class="btn btn-secondary">
+                ⬆ heroes.json → BD
+            </button>
+        </form>
+    </div>
+</div>
+
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem;">
 
     <!-- Game config XML -->
@@ -78,6 +98,7 @@
                                         }
                                         else
                                         {
+
                                             @row[i]
                                         }
                                     </td>
@@ -91,7 +112,7 @@
     </div>
 </div>
 
-<!-- Heroes JSON export/import -->
+<!-- Heroes JSON -->
 <div class="card">
     <h2>Heroes JSON (heroes.json)</h2>
     <div style="display:flex; gap:10px; margin-bottom:1rem;">

@@ -5,15 +5,19 @@
 }
 
 <div class="hero-banner">
-
-    <!-- Bunni banner -->
     <img class="hero-banner-img" src="~/images/banner.jpg" alt="Banner" />
-
     <div class="hero-banner-content">
         <h1>Kingdom of Bytecroft</h1>
         <p>Your heroes await. Forge legends, lead battles, write history.</p>
     </div>
 </div>
+
+@if (!string.IsNullOrEmpty(Model.SyncMessage))
+{
+    <div class="alert @(Model.SyncError ? "alert-danger" : "alert-success")" style="margin-bottom:1rem;">
+        @Model.SyncMessage
+    </div>
+}
 
 <div class="stat-grid">
     <div class="stat-card">
@@ -38,12 +42,16 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom:1rem;">
+
+    <!-- Recent heroes -->
     <div class="card">
         <h2>Recent heroes</h2>
         @if (!Model.RecentHeroes.Any())
         {
-            <p style="color:var(--muted); font-size:0.9rem;">No heroes yet. <a asp-page="/Heroes/Create">Create one!</a></p>
+            <p style="color:var(--muted); font-size:0.9rem;">
+                No heroes yet. <a asp-page="/Heroes/Create">Create one!</a>
+            </p>
         }
         else
         {
@@ -55,8 +63,15 @@
                     @foreach (var h in Model.RecentHeroes)
                     {
                         <tr>
-                            <td><a asp-page="/Heroes/Detail" asp-route-name="@h.Name">@h.Name</a></td>
-                            <td><span class="badge badge-@h.Type.ToLower()">@h.Type</span></td>
+                            <td>
+                                <a asp-page="/Heroes/Detail" asp-route-id="@h.Id"
+                                   style="color:#c0b0ff;">@h.Name</a>
+                            </td>
+                            <td>
+                                <span class="badge badge-@h.HeroClass?.Name.ToLower()">
+                                    @h.HeroClass?.Name
+                                </span>
+                            </td>
                             <td>@h.Level</td>
                             <td>@h.MaxHp</td>
                         </tr>
@@ -70,13 +85,32 @@
         </div>
     </div>
 
+    <!-- Quick actions + Sync -->
     <div class="card">
         <h2>Quick actions</h2>
         <div style="display:flex; flex-direction:column; gap:10px; margin-top:0.5rem;">
             <a asp-page="/Heroes/Create" class="btn btn-primary">+ Create new hero</a>
-            <a asp-page="/Combat/Combat" class="btn btn-secondary">Start combat</a>
-            <a asp-page="/Files/Files" class="btn btn-secondary">Manage files</a>
-            <a asp-page="/Stats/Stats" class="btn btn-secondary">View statistics</a>
+            <a asp-page="/Combat/Combat" class="btn btn-secondary">⚔ Start combat</a>
+            <a asp-page="/Files/Files" class="btn btn-secondary">📁 Manage files</a>
+            <a asp-page="/Stats/Stats" class="btn btn-secondary">📊 View statistics</a>
+        </div>
+
+        <hr style="border-color:#333; margin:1.25rem 0;" />
+
+        <h3 style="margin-bottom:0.75rem; font-size:1rem; color:#9090b0;">
+            🔄 Sincronització Files ↔ BD
+        </h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <form method="post" asp-page-handler="ExportToFiles">
+                <button type="submit" class="btn btn-secondary" style="width:100%;">
+                    ⬇ BD → heroes.json
+                </button>
+            </form>
+            <form method="post" asp-page-handler="ImportFromFiles">
+                <button type="submit" class="btn btn-secondary" style="width:100%;">
+                    ⬆ heroes.json → BD
+                </button>
+            </form>
         </div>
     </div>
 </div>

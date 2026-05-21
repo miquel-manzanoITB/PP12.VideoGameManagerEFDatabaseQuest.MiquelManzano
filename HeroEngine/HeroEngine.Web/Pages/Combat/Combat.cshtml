@@ -14,7 +14,6 @@
 }
 
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
-    <!-- Start combat form -->
     <div class="card">
         <h2>Start a combat</h2>
         <form method="post">
@@ -24,7 +23,9 @@
                     <option value="">— Select hero —</option>
                     @foreach (var h in Model.AvailableHeroes)
                     {
-                        <option value="@h.Name">@h.Name (@h.Type, lvl @h.Level)</option>
+                        <option value="@h.Name">
+                            @h.Name (@h.HeroClass?.Name, lvl @h.Level)
+                        </option>
                     }
                 </select>
                 <span asp-validation-for="SelectedHero1" class="field-error"></span>
@@ -36,7 +37,9 @@
                     <option value="">— None —</option>
                     @foreach (var h in Model.AvailableHeroes)
                     {
-                        <option value="@h.Name">@h.Name (@h.Type, lvl @h.Level)</option>
+                        <option value="@h.Name">
+                            @h.Name (@h.HeroClass?.Name, lvl @h.Level)
+                        </option>
                     }
                 </select>
             </div>
@@ -54,7 +57,6 @@
         </form>
     </div>
 
-    <!-- Last combat summary -->
     <div class="card">
         <h2>Last combat result</h2>
         @if (Model.LastStats == null)
@@ -83,7 +85,6 @@
     </div>
 </div>
 
-<!-- Combat log -->
 <div class="card">
     <h2>Combat log (battle.log)</h2>
     @if (string.IsNullOrEmpty(Model.CombatLog))

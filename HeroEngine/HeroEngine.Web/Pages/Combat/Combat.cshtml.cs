@@ -4,23 +4,24 @@ using HeroEngine.Core.Models;
 using HeroEngine.Web.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 public class CombatPageModel : PageModel
 {
-    private readonly HeroRepository _repo;
+    private readonly HeroEngineContext _context;   // ← BD en lloc de HeroRepository
     private readonly CsvStatsWriter _csv;
     private readonly GameConfig _config;
     private readonly string _logPath;
 
-    public List<HeroDto> AvailableHeroes { get; set; } = new();
+    public List<HeroEntity> AvailableHeroes { get; set; } = new();
     public string CombatLog { get; set; } = "";
     public string Message { get; set; } = "";
     public bool Victory { get; set; }
     public CombatResultDto? LastStats { get; set; }
 
     [BindProperty]
-    [Required(ErrorMessage = "Please select at least one hero.")]
+    [Required(ErrorMessage = "Selecciona almenys un heroi.")]
     public string SelectedHero1 { get; set; } = "";
 
     [BindProperty]
@@ -29,27 +30,30 @@ public class CombatPageModel : PageModel
     [BindProperty]
     public string EnemyType { get; set; } = "Minion";
 
-    public CombatPageModel(HeroRepository repo, CsvStatsWriter csv,
+    public CombatPageModel(HeroEngineContext context, CsvStatsWriter csv,
                            GameConfig config, IWebHostEnvironment env)
     {
-        _repo = repo;
+        _context = context;
         _csv = csv;
         _config = config;
         _logPath = Path.Combine(env.ContentRootPath, "Data", "battle.log");
     }
 
-    public void OnGet()
+    public async Task OnGetAsync()
     {
-        if (System.IO.File.Exists(_logPath))
-            CombatLog = System.IO.File.ReadAllText(_logPath);
-
-        AvailableHeroes = _repo.LoadAll();
+        AvailableHeroes = await _context.Heroes
+            .Include(h => h.HeroClass)
+            .Include(h => h.Abilities)
+            .ToListAsync();
         LoadLog();
     }
 
-    public IActionResult OnPost()
+    public async Task<IActionResult> OnPostAsync()
     {
-        AvailableHeroes = _repo.LoadAll();
+        AvailableHeroes = await _context.Heroes
+            .Include(h => h.HeroClass)
+            .Include(h => h.Abilities)
+            .ToListAsync();
 
         if (!ModelState.IsValid)
         {
@@ -57,34 +61,36 @@ public class CombatPageModel : PageModel
             return Page();
         }
 
-        // Build hero list
-        var heroDtos = new List<HeroDto>();
+        // Build hero list from DB entities
+        var selectedEntities = new List<HeroEntity>();
+
         var h1 = AvailableHeroes.FirstOrDefault(h =>
             h.Name.Equals(SelectedHero1, StringComparison.OrdinalIgnoreCase));
-        if (h1 != null) heroDtos.Add(h1);
+        if (h1 != null) selectedEntities.Add(h1);
 
         if (!string.IsNullOrEmpty(SelectedHero2))
         {
             var h2 = AvailableHeroes.FirstOrDefault(h =>
                 h.Name.Equals(SelectedHero2, StringComparison.OrdinalIgnoreCase)
                 && h.Name != SelectedHero1);
-            if (h2 != null) heroDtos.Add(h2);
+            if (h2 != null) selectedEntities.Add(h2);
         }
 
-        if (!heroDtos.Any())
+        if (!selectedEntities.Any())
         {
-            ModelState.AddModelError("", "Selected hero not found.");
+            ModelState.AddModelError("", "Heroi seleccionat no trobat.");
             LoadLog();
             return Page();
         }
 
-        // Convert DTOs to Hero objects
-        var heroes = heroDtos.Select(BuildHero).ToList();
+        // Convert DB entities to combat Hero objects (Warrior, Mage, Rogue)
+        // This is where the OOP hierarchy kicks in
+        var heroes = selectedEntities.Select(BuildCombatHero).ToList();
         var combatants = heroes.Select(h => (ICombatant)new HeroCombatant(h)).ToList();
 
         // Build enemies
-        var enemies = new List<ICombatant>();
         int count = heroes.Count;
+        var enemies = new List<ICombatant>();
         for (int i = 1; i <= count; i++)
         {
             enemies.Add(EnemyType switch
@@ -95,17 +101,16 @@ public class CombatPageModel : PageModel
             });
         }
 
-        // Run combat with log
+        // ─── Combat loop (same as before) ────────────────────────────────────
         var log = new List<string>();
         var helper = new CombatHelper();
-        int round = 0;
-        int totalDamage = 0;
+        int round = 0, totalDamage = 0;
 
         var activeHeroes = combatants.ToList();
         var activeEnemies = enemies.ToList();
 
         log.Add($"=== COMBAT LOG — {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===");
-        log.Add($"Participants: {string.Join(", ", heroDtos.Select(h => h.Name))} vs {count}x {EnemyType}");
+        log.Add($"Participants: {string.Join(", ", selectedEntities.Select(h => h.Name))} vs {count}x {EnemyType}");
         log.Add(new string('-', 50));
 
         int maxRounds = _config.MaxCombatRounds;
@@ -149,29 +154,22 @@ public class CombatPageModel : PageModel
         log.Add(victory ? "Result: VICTORY" : "Result: DEFEAT");
         log.Add(new string('=', 50));
 
-        // Write log (append)
-        try
-        {
-            System.IO.File.AppendAllLines(_logPath, log);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Log write error: {ex.Message}");
-        }
+        try { System.IO.File.AppendAllLines(_logPath, log); }
+        catch (Exception ex) { Console.Error.WriteLine($"Log write error: {ex.Message}"); }
 
-        // Find MVP (most damage among heroes)
-        string mvp = heroDtos.First().Name;
+        // Find MVP
+        string mvp = selectedEntities.First().Name;
         int mvpDmg = 0;
-        foreach (var h in heroDtos)
+        foreach (var entity in selectedEntities)
         {
-            int d = helper.GetTotalDamage(h.Name);
-            if (d > mvpDmg) { mvpDmg = d; mvp = h.Name; }
+            int d = helper.GetTotalDamage(entity.Name);
+            if (d > mvpDmg) { mvpDmg = d; mvp = entity.Name; }
         }
 
         // Save CSV stats
         var result = new CombatResultDto
         {
-            Heroes = heroDtos.Select(h => h.Name).ToList(),
+            Heroes = selectedEntities.Select(h => h.Name).ToList(),
             Enemies = Enumerable.Range(1, count).Select(i => $"{EnemyType}-{i}").ToList(),
             Victory = victory,
             Rounds = round,
@@ -197,16 +195,18 @@ public class CombatPageModel : PageModel
             if (System.IO.File.Exists(_logPath))
                 CombatLog = System.IO.File.ReadAllText(_logPath);
         }
-        catch (Exception ex)
-        {
-            CombatLog = $"Error reading log: {ex.Message}";
-        }
+        catch (Exception ex) { CombatLog = $"Error reading log: {ex.Message}"; }
     }
 
-    private static Hero BuildHero(HeroDto dto) => dto.Type switch
-    {
-        "Mage" => new Mage(dto.Name, dto.Level),
-        "Rogue" => new Rogue(dto.Name, dto.Level),
-        _ => new Warrior(dto.Name, dto.Level)
-    };
+    /// <summary>
+    /// Converts a DB HeroEntity into the correct combat Hero subclass.
+    /// This is where polymorphism kicks in: Warrior/Mage/Rogue.
+    /// </summary>
+    private static Hero BuildCombatHero(HeroEntity entity) =>
+        entity.HeroClass?.Name switch
+        {
+            "Mage" => new Mage(entity.Name, entity.Level),
+            "Rogue" => new Rogue(entity.Name, entity.Level),
+            _ => new Warrior(entity.Name, entity.Level)
+        };
 }
