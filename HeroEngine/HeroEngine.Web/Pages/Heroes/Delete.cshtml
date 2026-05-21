@@ -1,0 +1,29 @@
+﻿@page "/Heroes/Delete/{id:int}"
+@model DeleteModel
+@{
+    ViewData["Title"] = "Eliminar heroi";
+}
+
+@if (Model.Hero == null)
+{
+    <p style="color:#ff8080;">Heroi no trobat.</p>
+}
+else
+{
+    <h1 style="color:#ff8080;">Eliminar heroi</h1>
+
+    <div class="card" style="max-width:500px;">
+        <p>Estàs segur que vols eliminar <strong>@Model.Hero.Name</strong>?</p>
+        <table style="margin-bottom:1rem;">
+            <tr><td style="color:#7070a0; width:120px;">Classe</td><td>@Model.Hero.HeroClass?.Name</td></tr>
+            <tr><td style="color:#7070a0;">Nivell</td><td>@Model.Hero.Level</td></tr>
+            <tr><td style="color:#7070a0;">Habilitats</td><td>@Model.Hero.Abilities.Count (s'eliminaran)</td></tr>
+        </table>
+
+        <form method="post">
+            <input type="hidden" name="id" value="@Model.Hero.Id" />
+            <button type="submit" class="btn btn-danger">Sí, elimina</button>
+            <a asp-page="/Heroes/Heroes" class="btn btn-secondary" style="margin-left:8px;">Cancel·lar</a>
+        </form>
+    </div>
+}
