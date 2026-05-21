@@ -21,6 +21,8 @@ builder.Services.AddSingleton(new CsvStatsWriter(
 builder.Services.AddSingleton(
     GameConfig.Load(Path.Combine(dataDir, "game_config.xml")));
 
+// ─── Servei de sincronització Files ↔ DB ──────────────────────────────────────
+builder.Services.AddScoped<SyncService>();
 
 var app = builder.Build();
 

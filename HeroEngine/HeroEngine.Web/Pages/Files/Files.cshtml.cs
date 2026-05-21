@@ -8,6 +8,7 @@ public class FilesPageModel : PageModel
     private readonly HeroRepository _repo;
     private readonly CsvStatsWriter _csv;
     private readonly IWebHostEnvironment _env;
+    private readonly SyncService _sync;
 
     private string ConfigPath => Path.Combine(_env.ContentRootPath, "Data", "game_config.xml");
 
@@ -20,17 +21,16 @@ public class FilesPageModel : PageModel
     [BindProperty]
     public GameConfig Config { get; set; } = new();
 
-    public FilesPageModel(HeroRepository repo, CsvStatsWriter csv, IWebHostEnvironment env)
+    public FilesPageModel(HeroRepository repo, CsvStatsWriter csv,
+                          IWebHostEnvironment env, SyncService sync)
     {
         _repo = repo;
         _csv = csv;
         _env = env;
+        _sync = sync;
     }
 
-    public void OnGet()
-    {
-        LoadAll();
-    }
+    public void OnGet() => LoadAll();
 
     public IActionResult OnPostSaveConfig()
     {
@@ -53,13 +53,10 @@ public class FilesPageModel : PageModel
         string path = Path.Combine(_env.ContentRootPath, "Data", "combat_stats.csv");
         if (!System.IO.File.Exists(path))
         {
-            Message = "CSV file not found.";
-            IsError = true;
-            LoadAll();
-            return Page();
+            Message = "CSV file not found."; IsError = true;
+            LoadAll(); return Page();
         }
-        byte[] bytes = System.IO.File.ReadAllBytes(path);
-        return File(bytes, "text/csv", "combat_stats.csv");
+        return File(System.IO.File.ReadAllBytes(path), "text/csv", "combat_stats.csv");
     }
 
     public IActionResult OnPostDownloadJson()
@@ -67,21 +64,34 @@ public class FilesPageModel : PageModel
         string path = Path.Combine(_env.ContentRootPath, "Data", "heroes.json");
         if (!System.IO.File.Exists(path))
         {
-            Message = "heroes.json not found.";
-            IsError = true;
-            LoadAll();
-            return Page();
+            Message = "heroes.json not found."; IsError = true;
+            LoadAll(); return Page();
         }
-        byte[] bytes = System.IO.File.ReadAllBytes(path);
-        return File(bytes, "application/json", "heroes.json");
+        return File(System.IO.File.ReadAllBytes(path), "application/json", "heroes.json");
+    }
+
+    // Botó: DB → heroes.json
+    public async Task<IActionResult> OnPostExportToFilesAsync()
+    {
+        try { Message = await _sync.ExportDbToFilesAsync(); }
+        catch (Exception ex) { Message = $"Error exportant: {ex.Message}"; IsError = true; }
+        LoadAll();
+        return Page();
+    }
+
+    // Botó: heroes.json → DB
+    public async Task<IActionResult> OnPostImportFromFilesAsync()
+    {
+        try { Message = await _sync.ImportFilesToDbAsync(); }
+        catch (Exception ex) { Message = $"Error important: {ex.Message}"; IsError = true; }
+        LoadAll();
+        return Page();
     }
 
     private void LoadAll()
     {
-        // Load config
         Config = GameConfig.Load(ConfigPath);
 
-        // Load heroes JSON
         try
         {
             var heroes = _repo.LoadAll();
@@ -90,7 +100,6 @@ public class FilesPageModel : PageModel
         }
         catch (Exception ex) { HeroesJson = $"Error: {ex.Message}"; }
 
-        // Load raw XML
         try
         {
             if (System.IO.File.Exists(ConfigPath))
@@ -98,7 +107,6 @@ public class FilesPageModel : PageModel
         }
         catch (Exception ex) { ConfigXml = $"Error: {ex.Message}"; }
 
-        // Load CSV rows
         CombatRows = _csv.ReadLast(10);
     }
 }
