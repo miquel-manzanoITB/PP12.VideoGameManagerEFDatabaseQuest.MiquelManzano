@@ -1,10 +1,14 @@
 using HeroEngine.Core.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 
+// ─── EF Core ─────────────────────────────────────────────────────────────────
+builder.Services.AddDbContext<HeroEngineContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Paths absolutos para los ficheros de datos
 string dataDir = Path.Combine(builder.Environment.ContentRootPath, "Data");
